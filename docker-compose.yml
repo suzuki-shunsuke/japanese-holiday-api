@@ -4,6 +4,9 @@ services:
     image: suzukishunsuke/japanese-holiday-api
     ports:
     - "1323:1323"
+    environment:
+      RDB_HOST: rdb
+      RDB_PORT: "3306"
   rdb:
     image: mariadb:10.3.0
     environment:
