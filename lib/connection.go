@@ -3,17 +3,14 @@ package lib
 import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/suzuki-shunsuke/japanese-holiday-api/types"
+	"strconv"
 )
 
-func GetConnection() *gorm.DB {
-	DBMS := "mysql"
-	USER := "root"
-	PASS := "password"
-	PROTOCOL := "tcp(localhost:4306)"
-	DBNAME := "app"
-
-	CONNECT := USER + ":" + PASS + "@" + PROTOCOL + "/" + DBNAME + "?parseTime=true"
-	db, err := gorm.Open(DBMS, CONNECT)
+func GetConnection(config *types.Config) *gorm.DB {
+	protocol := "tcp(" + config.RDB.Host + ":" + strconv.Itoa(config.RDB.Port) + ")"
+	CONNECT := config.RDB.User + ":" + config.RDB.Password + "@" + protocol + "/" + config.RDB.DBName + "?parseTime=true"
+	db, err := gorm.Open(config.RDB.Dbms, CONNECT)
 
 	if err != nil {
 		panic(err.Error())

@@ -9,3 +9,17 @@ type Holiday struct {
 type Db struct {
 	Holidays []Holiday `json: "holidays"`
 }
+
+type RDBConfig struct {
+	Dbms     string
+	User     string
+	Password string
+	Host     string
+	Port     int
+	DBName   string
+	Protocol string
+}
+
+type Config struct {
+	RDB RDBConfig
+}

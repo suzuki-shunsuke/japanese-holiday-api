@@ -1,0 +1,7 @@
+[rdb]
+dbms = "mysql"
+user = "root"
+password = "password"
+host = "localhost"
+port = 4306
+dbname = "app"
