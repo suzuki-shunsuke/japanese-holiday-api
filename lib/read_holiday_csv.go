@@ -2,6 +2,7 @@ package lib
 
 import (
 	"encoding/csv"
+	"github.com/suzuki-shunsuke/japanese-holiday-api/types"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 	"io"
@@ -9,7 +10,7 @@ import (
 	"os"
 )
 
-func ReadHolidayCsv(path string) []Holiday {
+func ReadHolidayCsv(path string) []types.Holiday {
 	file, err := os.Open(path)
 	failOnError(err)
 	defer file.Close()
@@ -21,7 +22,7 @@ func ReadHolidayCsv(path string) []Holiday {
 		failOnError(err)
 	}
 	failOnError(err)
-	var holidays []Holiday
+	var holidays []types.Holiday
 
 	for {
 		record, err := reader.Read()
@@ -29,7 +30,7 @@ func ReadHolidayCsv(path string) []Holiday {
 			break
 		}
 		failOnError(err)
-		holidays = append(holidays, Holiday{Date: record[0], Name: record[1], Type: 1})
+		holidays = append(holidays, types.Holiday{Date: record[0], Name: record[1], Type: 1})
 	}
 	return holidays
 }

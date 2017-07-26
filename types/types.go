@@ -1,4 +1,4 @@
-package lib
+package types
 
 type Holiday struct {
 	Name string `json:"name"`
