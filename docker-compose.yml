@@ -4,3 +4,11 @@ services:
     image: suzukishunsuke/japanese-holiday-api
     ports:
     - "1323:1323"
+  rdb:
+    image: mariadb:10.3.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+    - "4306:3306"
+    volumes:
+    - ./mysql_conf.d:/etc/mysql/conf.d
