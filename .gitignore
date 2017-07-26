@@ -1,0 +1,7 @@
+syukujitsu.csv
+
+## node
+node_modules
+
+## common
+**/*.log
