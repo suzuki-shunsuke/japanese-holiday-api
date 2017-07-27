@@ -13,7 +13,7 @@ func GetHolidays(c echo.Context) error {
 	db := GetConnection(config)
 	var holidays_ []models.Holiday
 	var holidays []types.Holiday
-	db.Select("name, type, date").Find(&holidays_)
+	db.Select("name, type, date, day_of_week").Find(&holidays_)
 	for _, h := range holidays_ {
 		holidays = append(holidays, h.ToType())
 	}

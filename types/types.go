@@ -1,9 +1,10 @@
 package types
 
 type Holiday struct {
-	Name string `json:"name"`
-	Date string `json:"date"`
-	Type int    `json:"type"`
+	Name      string `json:"name"`
+	Date      string `json:"date"`
+	Type      int    `json:"type"`
+	DayOfWeek int    `json:"day_of_week"`
 }
 
 type Db struct {
