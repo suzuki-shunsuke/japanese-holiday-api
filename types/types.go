@@ -10,6 +10,10 @@ type Db struct {
 	Holidays []Holiday `json: "holidays"`
 }
 
+type AppConfig struct {
+	Port int
+}
+
 type RDBConfig struct {
 	Dbms     string
 	User     string
@@ -22,4 +26,5 @@ type RDBConfig struct {
 
 type Config struct {
 	RDB RDBConfig
+	App AppConfig
 }

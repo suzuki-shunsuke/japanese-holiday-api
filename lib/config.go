@@ -14,6 +14,7 @@ func GetConfig() (*types.Config, error) {
 	host := os.Getenv("RDB_HOST")
 	dbName := os.Getenv("RDB_DBNAME")
 	port_str := os.Getenv("RDB_PORT")
+	app_port_str := os.Getenv("APP_PORT")
 	if len(password) > 0 {
 		config.RDB.Password = password
 	}
@@ -25,6 +26,9 @@ func GetConfig() (*types.Config, error) {
 	}
 	if len(port_str) > 0 {
 		config.RDB.Port, err = strconv.Atoi(port_str)
+	}
+	if len(app_port_str) > 0 {
+		config.App.Port, err = strconv.Atoi(app_port_str)
 	}
 
 	return &config, err
