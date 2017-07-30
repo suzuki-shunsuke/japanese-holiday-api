@@ -12,6 +12,52 @@ import (
 	"time"
 )
 
+func getHolidayList(holidays_ *[]models.Holiday, startDate *time.Time, endDate *time.Time) (holiday_list types.Holidays) {
+	holidays := map[string]types.Holiday{}
+	var prev_holiday time.Time
+	for i, h := range *holidays_ {
+		if i == 0 {
+			prev_holiday = h.Date
+		}
+		ht := h.ToType()
+		holidays[ht.Date] = ht
+		holiday_list = append(holiday_list, ht)
+		// http://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html
+		// 3.その前日及び翌日が「国民の祝日」である日（「国民の祝日」でない日に限る。）は、休日とする。
+		if prev_holiday.AddDate(0, 0, 2).Equal(h.Date) {
+			ht_ := prev_holiday.AddDate(0, 0, 1)
+			ht = types.Holiday{Name: "", Type: 3, Date: ht_.Format("2006-01-02"), DayOfWeek: int(ht_.Weekday())}
+			holiday_list = append(holiday_list, ht)
+			holidays[ht.Date] = ht
+		}
+		prev_holiday = h.Date
+	}
+	// add sunday
+	for date := startDate.AddDate(0, 0, (7-int(startDate.Weekday()))%7); date.Before(*endDate); date = date.AddDate(0, 0, 7) {
+		date_str := date.Format("2006-01-02")
+		_, ok := holidays[date_str]
+		if !ok {
+			ht := types.Holiday{Name: "", DayOfWeek: 0, Type: 0, Date: date_str}
+			holiday_list = append(holiday_list, ht)
+			holidays[date_str] = ht
+			continue
+		}
+		// http://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html
+		// 2.「国民の祝日」が日曜日に当たるときは、その日後においてその日に最も近い「国民の祝日」でない日を休日とする。
+		for alter_date := date.AddDate(0, 0, 1); alter_date.Before(date.AddDate(0, 0, 7)); alter_date = alter_date.AddDate(0, 0, 1) {
+			date_str := alter_date.Format("2006-01-02")
+			_, ok := holidays[date_str]
+			if !ok {
+				ht := types.Holiday{Name: "", DayOfWeek: int(alter_date.Weekday()), Type: 2, Date: date_str}
+				holiday_list = append(holiday_list, ht)
+				holidays[date_str] = ht
+				break
+			}
+		}
+	}
+	return holiday_list
+}
+
 func GetHolidays(c echo.Context) error {
 	req := new(types.Request)
 	q := c.QueryParam("q")
@@ -47,49 +93,8 @@ func GetHolidays(c echo.Context) error {
 		}
 	}
 	query.Find(&holidays_)
-	holidays := map[string]types.Holiday{}
-	var holiday_list types.Holidays
-	var prev_holiday time.Time
-	for i, h := range holidays_ {
-		if i == 0 {
-			prev_holiday = h.Date
-		}
-		ht := h.ToType()
-		holidays[ht.Date] = ht
-		holiday_list = append(holiday_list, ht)
-		// http://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html
-		// 3.その前日及び翌日が「国民の祝日」である日（「国民の祝日」でない日に限る。）は、休日とする。
-		if prev_holiday.AddDate(0, 0, 2).Equal(h.Date) {
-			ht_ := prev_holiday.AddDate(0, 0, 1)
-			ht = types.Holiday{Name: "", Type: 3, Date: ht_.Format("2006-01-02"), DayOfWeek: int(ht_.Weekday())}
-			holiday_list = append(holiday_list, ht)
-			holidays[ht.Date] = ht
-		}
-		prev_holiday = h.Date
-	}
-	// add sunday
-	for date := startDate.AddDate(0, 0, (7-int(startDate.Weekday()))%7); date.Before(endDate); date = date.AddDate(0, 0, 7) {
-		date_str := date.Format("2006-01-02")
-		_, ok := holidays[date_str]
-		if !ok {
-			ht := types.Holiday{Name: "", DayOfWeek: 0, Type: 0, Date: date_str}
-			holiday_list = append(holiday_list, ht)
-			holidays[date_str] = ht
-			continue
-		}
-		// http://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html
-		// 2.「国民の祝日」が日曜日に当たるときは、その日後においてその日に最も近い「国民の祝日」でない日を休日とする。
-		for alter_date := date.AddDate(0, 0, 1); alter_date.Before(date.AddDate(0, 0, 7)); alter_date = alter_date.AddDate(0, 0, 1) {
-			date_str := alter_date.Format("2006-01-02")
-			_, ok := holidays[date_str]
-			if !ok {
-				ht := types.Holiday{Name: "", DayOfWeek: int(alter_date.Weekday()), Type: 2, Date: date_str}
-				holiday_list = append(holiday_list, ht)
-				holidays[date_str] = ht
-				break
-			}
-		}
-	}
+	holiday_list := getHolidayList(&holidays_, &startDate, &endDate)
+
 	sort.Sort(holiday_list)
 	return c.JSON(http.StatusOK, holiday_list)
 }
