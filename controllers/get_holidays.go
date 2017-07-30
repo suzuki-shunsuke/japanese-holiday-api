@@ -1,14 +1,13 @@
-package lib
+package controllers
 
 import (
 	"net/http"
 
 	"encoding/json"
 	"github.com/labstack/echo"
+	"github.com/suzuki-shunsuke/japanese-holiday-api/lib"
 	"github.com/suzuki-shunsuke/japanese-holiday-api/models"
 	"github.com/suzuki-shunsuke/japanese-holiday-api/types"
-	// "gopkg.in/go-playground/validator.v9"
-	// "fmt"
 	"sort"
 	"time"
 )
@@ -19,8 +18,8 @@ func GetHolidays(c echo.Context) error {
 	var holidays_ []models.Holiday
 	startDate := time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC)
 	endDate := time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)
-	config, _ := GetConfig()
-	db := GetConnection(config)
+	config, _ := lib.GetConfig()
+	db := lib.GetConnection(config)
 	query := db.Debug().Select("name, type, date, day_of_week")
 	if len(q) > 0 {
 		if err := json.Unmarshal(([]byte)(q), req); err != nil {
@@ -93,8 +92,4 @@ func GetHolidays(c echo.Context) error {
 	}
 	sort.Sort(holiday_list)
 	return c.JSON(http.StatusOK, holiday_list)
-}
-
-func Hello(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello, World!")
 }
