@@ -58,41 +58,45 @@ func getHolidayList(holidays_ *[]models.Holiday, startDate *time.Time, endDate *
 	return holiday_list
 }
 
-func GetHolidays(c echo.Context) error {
-	req := new(types.Request)
-	q := c.QueryParam("q")
-	var holidays_ []models.Holiday
-	startDate := time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC)
-	endDate := time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)
-	config, _ := lib.GetConfig()
+func getNationalHolidays(c echo.Context, q string, req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ []models.Holiday, err *types.AppError) {
 	db := lib.GetConnection(config)
 	query := db.Debug().Select("name, type, date, day_of_week")
 	if len(q) > 0 {
 		if err := json.Unmarshal(([]byte)(q), req); err != nil {
-			ret := map[string]string{"message": "The format of 'q' parameter is invalid"}
-			return c.JSON(http.StatusBadRequest, ret)
+			return nil, &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'q' parameter is invalid"}
 		}
 		// Convert From string to time.Time
 		if len(req.From) > 0 {
 			from_time, err := time.Parse("2006-01-02", req.From)
 			if err != nil {
-				ret := map[string]string{"message": "The format of 'from' paramater is invalid"}
-				return c.JSON(http.StatusBadRequest, ret)
+				return nil, &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'from' parameter is invalid"}
 			}
 			query = query.Where("date >= ?", from_time.Format("2006-01-02"))
-			startDate = from_time
+			*startDate = from_time
 		}
 		if len(req.To) > 0 {
 			to_time, err := time.Parse("2006-01-02", req.To)
 			if err != nil {
-				ret := map[string]string{"message": "The format of 'to' paramater is invalid"}
-				return c.JSON(http.StatusBadRequest, ret)
+				return nil, &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'to' parameter is invalid"}
 			}
 			query = query.Where("date < ?", to_time.Format("2006-01-02"))
-			endDate = to_time
+			*endDate = to_time
 		}
 	}
 	query.Find(&holidays_)
+	return holidays_, nil
+}
+
+func GetHolidays(c echo.Context) error {
+	req := new(types.Request)
+	q := c.QueryParam("q")
+	startDate := time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)
+	config, _ := lib.GetConfig()
+	holidays_, err := getNationalHolidays(c, q, req, &startDate, &endDate, config)
+	if err != nil {
+		return c.JSON(err.Code, map[string]string{"message": err.Message})
+	}
 	holiday_list := getHolidayList(&holidays_, &startDate, &endDate)
 
 	sort.Sort(holiday_list)

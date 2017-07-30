@@ -1,5 +1,9 @@
 package types
 
+import (
+	"fmt"
+)
+
 type Holiday struct {
 	Name      string `json:"name"`
 	Date      string `json:"date"`
@@ -48,4 +52,13 @@ type Request struct {
 	From  string `json:"from" form:"from" query:"from"`
 	To    string `json:"to" form:"to" query:"to"`
 	Types []int  `json:"types" form:"types" query:"types"`
+}
+
+type AppError struct {
+	Message string
+	Code    int
+}
+
+func (err *AppError) Error() string {
+	return fmt.Sprintf("err %s [code=%d]", err.Message, err.Code)
 }
