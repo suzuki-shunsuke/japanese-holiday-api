@@ -9,7 +9,7 @@ import (
 type Holiday struct {
 	ID        int       `json:"id"`
 	Name      string    `gorm:"not null;type:varchar(100)" json:"name"`
-	Date      time.Time `gorm:"not null;type:date" json:"date"`
+	Date      time.Time `gorm:"not null;unique_index;type:date" json:"date"`
 	Type      int       `gorm:"not null" json:"type"`
 	DayOfWeek int       `gorm:"not null" json:"day_of_week"`
 }

@@ -7,6 +7,20 @@ type Holiday struct {
 	DayOfWeek int    `json:"day_of_week"`
 }
 
+type Holidays []Holiday
+
+func (h Holidays) Len() int {
+	return len(h)
+}
+
+func (h Holidays) Swap(i, j int) {
+	h[i], h[j] = h[j], h[i]
+}
+
+func (h Holidays) Less(i, j int) bool {
+	return h[i].Date < h[j].Date
+}
+
 type Db struct {
 	Holidays []Holiday `json: "holidays"`
 }
