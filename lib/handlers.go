@@ -3,33 +3,61 @@ package lib
 import (
 	"net/http"
 
+	"encoding/json"
 	"github.com/labstack/echo"
 	"github.com/suzuki-shunsuke/japanese-holiday-api/models"
 	"github.com/suzuki-shunsuke/japanese-holiday-api/types"
+	// "gopkg.in/go-playground/validator.v9"
+	// "fmt"
 	"sort"
 	"time"
 )
 
 func GetHolidays(c echo.Context) error {
+	req := new(types.Request)
+	q := c.QueryParam("q")
+	var holidays_ []models.Holiday
+	startDate := time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)
 	config, _ := GetConfig()
 	db := GetConnection(config)
-	var holidays_ []models.Holiday
+	query := db.Debug().Select("name, type, date, day_of_week")
+	if len(q) > 0 {
+		if err := json.Unmarshal(([]byte)(q), req); err != nil {
+			ret := map[string]string{"message": "The format of 'q' parameter is invalid"}
+			return c.JSON(http.StatusBadRequest, ret)
+		}
+		// Convert From string to time.Time
+		if len(req.From) > 0 {
+			from_time, err := time.Parse("2006-01-02", req.From)
+			if err != nil {
+				ret := map[string]string{"message": "The format of 'from' paramater is invalid"}
+				return c.JSON(http.StatusBadRequest, ret)
+			}
+			query = query.Where("date >= ?", from_time.Format("2006-01-02"))
+			startDate = from_time
+		}
+		if len(req.To) > 0 {
+			to_time, err := time.Parse("2006-01-02", req.To)
+			if err != nil {
+				ret := map[string]string{"message": "The format of 'to' paramater is invalid"}
+				return c.JSON(http.StatusBadRequest, ret)
+			}
+			query = query.Where("date < ?", to_time.Format("2006-01-02"))
+			endDate = to_time
+		}
+	}
+	query.Find(&holidays_)
 	holidays := map[string]types.Holiday{}
 	var holiday_list types.Holidays
-	db.Select("name, type, date, day_of_week").Find(&holidays_)
-	var startDate time.Time
-	var endDate time.Time
 	var prev_holiday time.Time
 	for i, h := range holidays_ {
 		if i == 0 {
-			startDate = time.Date(h.Date.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
-			endDate = time.Date(h.Date.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
 			prev_holiday = h.Date
 		}
 		ht := h.ToType()
 		holidays[ht.Date] = ht
 		holiday_list = append(holiday_list, ht)
-		endDate = h.Date
 		// http://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html
 		// 3.その前日及び翌日が「国民の祝日」である日（「国民の祝日」でない日に限る。）は、休日とする。
 		if prev_holiday.AddDate(0, 0, 2).Equal(h.Date) {
@@ -40,7 +68,6 @@ func GetHolidays(c echo.Context) error {
 		}
 		prev_holiday = h.Date
 	}
-	endDate = time.Date(endDate.Year()+1, 1, 1, 0, 0, 0, 0, time.UTC)
 	// add sunday
 	for date := startDate.AddDate(0, 0, (7-int(startDate.Weekday()))%7); date.Before(endDate); date = date.AddDate(0, 0, 7) {
 		date_str := date.Format("2006-01-02")

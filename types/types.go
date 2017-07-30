@@ -43,3 +43,9 @@ type Config struct {
 	RDB RDBConfig
 	App AppConfig
 }
+
+type Request struct {
+	From  string `json:"from" form:"from" query:"from"`
+	To    string `json:"to" form:"to" query:"to"`
+	Types []int  `json:"types" form:"types" query:"types"`
+}
