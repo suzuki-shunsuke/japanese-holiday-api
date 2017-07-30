@@ -30,11 +30,27 @@ func GetHolidays(c echo.Context) error {
 		endDate = h.Date
 	}
 	endDate = time.Date(endDate.Year()+1, 1, 1, 0, 0, 0, 0, time.UTC)
+	// add sunday
 	for date := startDate.AddDate(0, 0, (7-int(startDate.Weekday()))%7); date.Before(endDate); date = date.AddDate(0, 0, 7) {
 		date_str := date.Format("2006-01-02")
 		_, ok := holidays[date_str]
 		if !ok {
-			holiday_list = append(holiday_list, types.Holiday{Name: "", DayOfWeek: 0, Type: 0, Date: date_str})
+			ht := types.Holiday{Name: "", DayOfWeek: 0, Type: 0, Date: date_str}
+			holiday_list = append(holiday_list, ht)
+			holidays[date_str] = ht
+			continue
+		}
+		// http://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html
+		// 2.「国民の祝日」が日曜日に当たるときは、その日後においてその日に最も近い「国民の祝日」でない日を休日とする。
+		for alter_date := date.AddDate(0, 0, 1); alter_date.Before(date.AddDate(0, 0, 7)); alter_date = alter_date.AddDate(0, 0, 1) {
+			date_str := alter_date.Format("2006-01-02")
+			_, ok := holidays[date_str]
+			if !ok {
+				ht := types.Holiday{Name: "", DayOfWeek: int(alter_date.Weekday()), Type: 2, Date: date_str}
+				holiday_list = append(holiday_list, ht)
+				holidays[date_str] = ht
+				break
+			}
 		}
 	}
 	sort.Sort(holiday_list)
