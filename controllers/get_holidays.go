@@ -58,42 +58,53 @@ func getHolidayList(holidays_ *[]models.Holiday, startDate *time.Time, endDate *
 	return holiday_list
 }
 
-func getNationalHolidays(c echo.Context, q string, req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ []models.Holiday, err *types.AppError) {
+func getNationalHolidays(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ []models.Holiday, err *types.AppError) {
 	db := lib.GetConnection(config)
 	query := db.Debug().Select("name, type, date, day_of_week")
-	if len(q) > 0 {
-		if err := json.Unmarshal(([]byte)(q), req); err != nil {
-			return nil, &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'q' parameter is invalid"}
-		}
-		// Convert From string to time.Time
-		if len(req.From) > 0 {
-			from_time, err := time.Parse("2006-01-02", req.From)
-			if err != nil {
-				return nil, &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'from' parameter is invalid"}
-			}
-			query = query.Where("date >= ?", from_time.Format("2006-01-02"))
-			*startDate = from_time
-		}
-		if len(req.To) > 0 {
-			to_time, err := time.Parse("2006-01-02", req.To)
-			if err != nil {
-				return nil, &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'to' parameter is invalid"}
-			}
-			query = query.Where("date < ?", to_time.Format("2006-01-02"))
-			*endDate = to_time
-		}
+	if len(req.From) > 0 {
+		query = query.Where("date >= ?", startDate.Format("2006-01-02"))
+	}
+	if len(req.To) > 0 {
+		query = query.Where("date < ?", endDate.Format("2006-01-02"))
 	}
 	query.Find(&holidays_)
 	return holidays_, nil
 }
 
-func GetHolidays(c echo.Context) error {
+func parseQuery(q string, startDate *time.Time, endDate *time.Time) (*types.Request, *types.AppError) {
+	var err error
 	req := new(types.Request)
+	if len(q) > 0 {
+		if json.Unmarshal(([]byte)(q), req) != nil {
+			return nil, &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'q' parameter is invalid"}
+		}
+		// Convert From string to time.Time
+		if len(req.From) > 0 {
+			*startDate, err = time.Parse("2006-01-02", req.From)
+			if err != nil {
+				return nil, &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'from' parameter is invalid"}
+			}
+		}
+		if len(req.To) > 0 {
+			*endDate, err = time.Parse("2006-01-02", req.To)
+			if err != nil {
+				return nil, &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'to' parameter is invalid"}
+			}
+		}
+	}
+	return req, nil
+}
+
+func GetHolidays(c echo.Context) error {
 	q := c.QueryParam("q")
 	startDate := time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC)
 	endDate := time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)
 	config, _ := lib.GetConfig()
-	holidays_, err := getNationalHolidays(c, q, req, &startDate, &endDate, config)
+	req, err := parseQuery(q, &startDate, &endDate)
+	if err != nil {
+		return c.JSON(err.Code, map[string]string{"message": err.Message})
+	}
+	holidays_, err := getNationalHolidays(req, &startDate, &endDate, config)
 	if err != nil {
 		return c.JSON(err.Code, map[string]string{"message": err.Message})
 	}
