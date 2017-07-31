@@ -97,16 +97,24 @@ func parseQuery(q string, startDate *time.Time, endDate *time.Time) (*types.Requ
 
 func GetHolidays(c echo.Context) error {
 	q := c.QueryParam("q")
-	startDate := time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC)
-	endDate := time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)
 	config, _ := lib.GetConfig()
-	req, err := parseQuery(q, &startDate, &endDate)
+	startDate, err := time.Parse("2006-01-02", config.App.StartDate)
 	if err != nil {
-		return c.JSON(err.Code, map[string]string{"message": err.Message})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Internal Server Error"})
+
 	}
-	holidays_, err := getNationalHolidays(req, &startDate, &endDate, config)
+	endDate, err := time.Parse("2006-01-02", config.App.EndDate)
 	if err != nil {
-		return c.JSON(err.Code, map[string]string{"message": err.Message})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Internal Server Error"})
+
+	}
+	req, app_err := parseQuery(q, &startDate, &endDate)
+	if app_err != nil {
+		return c.JSON(app_err.Code, map[string]string{"message": app_err.Message})
+	}
+	holidays_, app_err := getNationalHolidays(req, &startDate, &endDate, config)
+	if app_err != nil {
+		return c.JSON(app_err.Code, map[string]string{"message": app_err.Message})
 	}
 	holiday_list := getHolidayList(&holidays_, &startDate, &endDate)
 

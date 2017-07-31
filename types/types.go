@@ -30,7 +30,9 @@ type Db struct {
 }
 
 type AppConfig struct {
-	Port int
+	Port      int
+	StartDate string
+	EndDate   string
 }
 
 type RDBConfig struct {
