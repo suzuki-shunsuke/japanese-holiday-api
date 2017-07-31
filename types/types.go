@@ -44,6 +44,7 @@ type RDBConfig struct {
 	Port     int
 	DBName   string
 	Protocol string
+	Debug    bool
 }
 
 type Config struct {

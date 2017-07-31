@@ -60,7 +60,10 @@ func getHolidayList(holidays_ *[]models.Holiday, startDate *time.Time, endDate *
 
 func getNationalHolidaysByRDB(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ []models.Holiday, err *types.AppError) {
 	db := lib.GetConnection(config)
-	query := db.Debug().Select("name, type, date, day_of_week")
+	query := db.Select("name, type, date, day_of_week")
+	if config.RDB.Debug {
+		query = query.Debug()
+	}
 	if len(req.From) > 0 {
 		query = query.Where("date >= ?", startDate.Format("2006-01-02"))
 	}
