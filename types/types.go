@@ -33,6 +33,7 @@ type AppConfig struct {
 	Port      int
 	StartDate string
 	EndDate   string
+	Storage   string
 }
 
 type RDBConfig struct {

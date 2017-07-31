@@ -10,3 +10,4 @@ dbname = "app"
 port = 1323
 startDate = "2016-01-01"
 endDate = "2019-01-01"
+storage = "rdb"

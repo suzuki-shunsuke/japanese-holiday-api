@@ -58,7 +58,7 @@ func getHolidayList(holidays_ *[]models.Holiday, startDate *time.Time, endDate *
 	return holiday_list
 }
 
-func getNationalHolidays(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ []models.Holiday, err *types.AppError) {
+func getNationalHolidaysByRDB(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ []models.Holiday, err *types.AppError) {
 	db := lib.GetConnection(config)
 	query := db.Debug().Select("name, type, date, day_of_week")
 	if len(req.From) > 0 {
@@ -69,6 +69,13 @@ func getNationalHolidays(req *types.Request, startDate *time.Time, endDate *time
 	}
 	query.Find(&holidays_)
 	return holidays_, nil
+}
+
+func getNationalHolidays(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ []models.Holiday, err *types.AppError) {
+	if config.App.Storage == "rdb" {
+		return getNationalHolidaysByRDB(req, startDate, endDate, config)
+	}
+	return nil, &types.AppError{Code: http.StatusInternalServerError, Message: "Internal Server Error"}
 }
 
 func parseQuery(q string, startDate *time.Time, endDate *time.Time) (*types.Request, *types.AppError) {
