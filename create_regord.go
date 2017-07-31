@@ -11,6 +11,6 @@ func main() {
 	db.AutoMigrate(&models.Holiday{})
 	holidays := lib.ReadHolidayCsv("syukujitsu.csv")
 	for _, holiday := range holidays {
-		models.CreateHoliday(db, holiday)
+		db.Create(&holiday)
 	}
 }

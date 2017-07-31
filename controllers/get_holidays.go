@@ -12,23 +12,26 @@ import (
 	"time"
 )
 
-func getHolidayList(holidays_ *[]models.Holiday, startDate *time.Time, endDate *time.Time) (holiday_list types.Holidays) {
-	holidays := map[string]types.Holiday{}
+func getHolidayList(holidays_ *[]models.Holiday, startDate *time.Time, endDate *time.Time) (holiday_list models.Holidays) {
+	holidays := map[string]models.Holiday{}
 	var prev_holiday time.Time
 	for i, h := range *holidays_ {
 		if i == 0 {
 			prev_holiday = h.Date
 		}
-		ht := h.ToType()
-		holidays[ht.Date] = ht
-		holiday_list = append(holiday_list, ht)
+		holidays[h.StringDate()] = h
+		holiday_list = append(holiday_list, h)
 		// http://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html
 		// 3.その前日及び翌日が「国民の祝日」である日（「国民の祝日」でない日に限る。）は、休日とする。
 		if prev_holiday.AddDate(0, 0, 2).Equal(h.Date) {
 			ht_ := prev_holiday.AddDate(0, 0, 1)
-			ht = types.Holiday{Name: "", Type: 3, Date: ht_.Format("2006-01-02"), DayOfWeek: int(ht_.Weekday())}
+			ht := models.Holiday{
+				Name:      "",
+				Type:      3,
+				Date:      ht_,
+				DayOfWeek: int(ht_.Weekday())}
 			holiday_list = append(holiday_list, ht)
-			holidays[ht.Date] = ht
+			holidays[ht.StringDate()] = ht
 		}
 		prev_holiday = h.Date
 	}
@@ -37,7 +40,11 @@ func getHolidayList(holidays_ *[]models.Holiday, startDate *time.Time, endDate *
 		date_str := date.Format("2006-01-02")
 		_, ok := holidays[date_str]
 		if !ok {
-			ht := types.Holiday{Name: "", DayOfWeek: 0, Type: 0, Date: date_str}
+			ht := models.Holiday{
+				Name:      "",
+				DayOfWeek: 0,
+				Type:      0,
+				Date:      date}
 			holiday_list = append(holiday_list, ht)
 			holidays[date_str] = ht
 			continue
@@ -48,7 +55,11 @@ func getHolidayList(holidays_ *[]models.Holiday, startDate *time.Time, endDate *
 			date_str := alter_date.Format("2006-01-02")
 			_, ok := holidays[date_str]
 			if !ok {
-				ht := types.Holiday{Name: "", DayOfWeek: int(alter_date.Weekday()), Type: 2, Date: date_str}
+				ht := models.Holiday{
+					Name:      "",
+					DayOfWeek: int(alter_date.Weekday()),
+					Type:      2,
+					Date:      alter_date}
 				holiday_list = append(holiday_list, ht)
 				holidays[date_str] = ht
 				break
@@ -111,12 +122,10 @@ func GetHolidays(c echo.Context) error {
 	startDate, err := time.Parse("2006-01-02", config.App.StartDate)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Internal Server Error"})
-
 	}
 	endDate, err := time.Parse("2006-01-02", config.App.EndDate)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Internal Server Error"})
-
 	}
 	req, app_err := parseQuery(q, &startDate, &endDate)
 	if app_err != nil {
@@ -129,5 +138,11 @@ func GetHolidays(c echo.Context) error {
 	holiday_list := getHolidayList(&holidays_, &startDate, &endDate)
 
 	sort.Sort(holiday_list)
-	return c.JSON(http.StatusOK, holiday_list)
+	var holidays []map[string]interface{}
+	for _, h := range holiday_list {
+		ht := h.Map([]string{"name", "date", "type", "day_of_week"})
+		ht["date"] = h.StringDate()
+		holidays = append(holidays, ht)
+	}
+	return c.JSON(http.StatusOK, holidays)
 }

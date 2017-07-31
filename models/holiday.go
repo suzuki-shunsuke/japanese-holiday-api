@@ -1,8 +1,6 @@
 package models
 
 import (
-	"github.com/jinzhu/gorm"
-	"github.com/suzuki-shunsuke/japanese-holiday-api/types"
 	"time"
 )
 
@@ -14,12 +12,38 @@ type Holiday struct {
 	DayOfWeek int       `gorm:"not null" json:"day_of_week"`
 }
 
-func CreateHoliday(db *gorm.DB, holiday types.Holiday) {
-	date, _ := time.Parse("2006-01-02", holiday.Date)
-	item := Holiday{Name: holiday.Name, Type: holiday.Type, Date: date, DayOfWeek: int(date.Weekday())}
-	db.Create(&item)
+func (h Holiday) StringDate() string {
+	return h.Date.Format("2006-01-02")
 }
 
-func (h Holiday) ToType() types.Holiday {
-	return types.Holiday{Name: h.Name, Type: h.Type, Date: h.Date.Format("2006-01-02"), DayOfWeek: h.DayOfWeek}
+type Holidays []Holiday
+
+func (h Holidays) Len() int {
+	return len(h)
+}
+
+func (h Holidays) Swap(i, j int) {
+	h[i], h[j] = h[j], h[i]
+}
+
+func (h Holidays) Less(i, j int) bool {
+	return h[i].Date.Before(h[j].Date)
+}
+
+func (h Holiday) Map(keys []string) (ret map[string]interface{}) {
+	ret = map[string]interface{}{}
+	for _, key := range keys {
+		if key == "id" {
+			ret["id"] = h.ID
+		} else if key == "name" {
+			ret["name"] = h.Name
+		} else if key == "date" {
+			ret["date"] = h.Date
+		} else if key == "type" {
+			ret["type"] = h.Type
+		} else if key == "day_of_week" {
+			ret["day_of_week"] = h.DayOfWeek
+		}
+	}
+	return ret
 }
