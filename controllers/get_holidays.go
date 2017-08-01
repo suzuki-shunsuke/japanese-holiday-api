@@ -70,7 +70,10 @@ func getHolidayList(holidays_ *models.Holidays, startDate *time.Time, endDate *t
 }
 
 func getNationalHolidaysByRDB(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ models.Holidays, err *types.AppError) {
-	db := lib.GetConnection(config)
+	db, app_err := lib.GetConnection(config)
+	if app_err != nil {
+		return nil, app_err
+	}
 	query := db.Select("name, type, date, day_of_week")
 	if config.RDB.Debug {
 		query = query.Debug()
