@@ -2,7 +2,8 @@
   "scripts": {
     "release": "standard-version",
     "commitmsg": "validate-commit-msg",
-    "json-server": "json-server --watch db.json"
+    "json-server": "json-server --watch db.json",
+    "images": "docker images suzukishunsuke/japanese-holiday-api"
   },
   "devDependencies": {
     "husky": "^0.14.3",

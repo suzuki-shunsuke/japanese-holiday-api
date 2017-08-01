@@ -1,4 +1,6 @@
 FROM scratch
-COPY ./server ./syukujitsu.csv ./config.toml /workspace/
+COPY ./server /workspace/
+COPY ./config/ /workspace/config/
+COPY ./data /workspace/data/
 WORKDIR /workspace
 CMD ["/workspace/server"]

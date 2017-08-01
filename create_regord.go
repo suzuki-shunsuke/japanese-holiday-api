@@ -9,7 +9,7 @@ func main() {
 	config, _ := lib.GetConfig()
 	db := lib.GetConnection(config)
 	db.AutoMigrate(&models.Holiday{})
-	holidays := lib.ReadHolidayCsv("syukujitsu.csv")
+	holidays := lib.ReadHolidayCsv("data/syukujitsu.csv")
 	for _, holiday := range holidays {
 		db.Create(&holiday)
 	}

@@ -9,7 +9,7 @@ import (
 
 func GetConfig() (*types.Config, error) {
 	var config types.Config
-	_, err := toml.DecodeFile("config.toml", &config)
+	_, err := toml.DecodeFile("config/config.toml", &config)
 	password := os.Getenv("RDB_PASSWORD")
 	host := os.Getenv("RDB_HOST")
 	dbName := os.Getenv("RDB_DBNAME")
