@@ -5,6 +5,7 @@ password = "password"
 host = "localhost"
 port = 4306
 dbname = "app"
+isOtherHolidaysStored = false
 debug = true
 
 [app]

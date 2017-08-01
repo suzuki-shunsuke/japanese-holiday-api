@@ -12,14 +12,15 @@ type AppConfig struct {
 }
 
 type RDBConfig struct {
-	Dbms     string
-	User     string
-	Password string
-	Host     string
-	Port     int
-	DBName   string
-	Protocol string
-	Debug    bool
+	Dbms                  string
+	User                  string
+	Password              string
+	Host                  string
+	Port                  int
+	DBName                string
+	Protocol              string
+	IsOtherHolidaysStored bool
+	Debug                 bool
 }
 
 type Config struct {

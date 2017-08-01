@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func getHolidayList(holidays_ *[]models.Holiday, startDate *time.Time, endDate *time.Time) (holiday_list models.Holidays) {
+func getHolidayList(holidays_ *models.Holidays, startDate *time.Time, endDate *time.Time) (holiday_list models.Holidays) {
 	holidays := map[string]models.Holiday{}
 	var prev_holiday time.Time
 	for i, h := range *holidays_ {
@@ -69,7 +69,7 @@ func getHolidayList(holidays_ *[]models.Holiday, startDate *time.Time, endDate *
 	return holiday_list
 }
 
-func getNationalHolidaysByRDB(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ []models.Holiday, err *types.AppError) {
+func getNationalHolidaysByRDB(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ models.Holidays, err *types.AppError) {
 	db := lib.GetConnection(config)
 	query := db.Select("name, type, date, day_of_week")
 	if config.RDB.Debug {
@@ -85,7 +85,7 @@ func getNationalHolidaysByRDB(req *types.Request, startDate *time.Time, endDate 
 	return holidays_, nil
 }
 
-func getNationalHolidays(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ []models.Holiday, err *types.AppError) {
+func getNationalHolidays(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ models.Holidays, err *types.AppError) {
 	if config.App.Storage == "rdb" {
 		return getNationalHolidaysByRDB(req, startDate, endDate, config)
 	}
@@ -131,12 +131,13 @@ func GetHolidays(c echo.Context) error {
 	if app_err != nil {
 		return c.JSON(app_err.Code, map[string]string{"message": app_err.Message})
 	}
-	holidays_, app_err := getNationalHolidays(req, &startDate, &endDate, config)
+	holiday_list, app_err := getNationalHolidays(req, &startDate, &endDate, config)
 	if app_err != nil {
 		return c.JSON(app_err.Code, map[string]string{"message": app_err.Message})
 	}
-	holiday_list := getHolidayList(&holidays_, &startDate, &endDate)
-
+	if !config.RDB.IsOtherHolidaysStored {
+		holiday_list = getHolidayList(&holiday_list, &startDate, &endDate)
+	}
 	sort.Sort(holiday_list)
 	var holidays []map[string]interface{}
 	for _, h := range holiday_list {
