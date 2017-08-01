@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/suzuki-shunsuke/japanese-holiday-api/types"
 	"time"
 )
 
@@ -47,19 +46,6 @@ func (h Holiday) Map(keys []string) (ret map[string]interface{}) {
 		}
 	}
 	return ret
-}
-
-func GetNationalHolidaysByRDB(startDate *time.Time, endDate *time.Time, config *types.Config) (holidays Holidays, err *types.AppError) {
-	db, app_err := GetConnection(config)
-	if app_err != nil {
-		return nil, app_err
-	}
-	query := db.Select("name, type, date, day_of_week").Where("date >= ? AND date < ?", startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
-	if config.RDB.Debug {
-		query = query.Debug()
-	}
-	query.Find(&holidays)
-	return holidays, nil
 }
 
 func GetHolidayList(holidays_ *Holidays, startDate *time.Time, endDate *time.Time) (holiday_list Holidays) {

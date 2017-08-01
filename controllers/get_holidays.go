@@ -5,31 +5,12 @@ import (
 
 	"encoding/json"
 	"github.com/labstack/echo"
-	"github.com/suzuki-shunsuke/japanese-holiday-api/lib"
 	"github.com/suzuki-shunsuke/japanese-holiday-api/models"
+	"github.com/suzuki-shunsuke/japanese-holiday-api/services"
 	"github.com/suzuki-shunsuke/japanese-holiday-api/types"
 	"sort"
 	"time"
 )
-
-func getNationalHolidays(startDate *time.Time, endDate *time.Time, config *types.Config) (holidays models.Holidays, app_err *types.AppError) {
-	if config.App.Storage == "rdb" {
-		return models.GetNationalHolidaysByRDB(startDate, endDate, config)
-	}
-	if config.App.Storage == "sjis_csv" {
-		holidays_, app_err := lib.ReadHolidayCsv(config.SjisCsv.Path)
-		if app_err != nil {
-			return holidays_, app_err
-		}
-		for _, holiday := range holidays_ {
-			if !holiday.Date.Before(*startDate) && holiday.Date.Before(*endDate) {
-				holidays = append(holidays, holiday)
-			}
-		}
-		return holidays, nil
-	}
-	return nil, &types.AppError{Code: http.StatusInternalServerError, Message: "Internal Server Error"}
-}
 
 func parseQuery(q string, startDate *time.Time, endDate *time.Time) *types.AppError {
 	var err error
@@ -56,7 +37,7 @@ func parseQuery(q string, startDate *time.Time, endDate *time.Time) *types.AppEr
 }
 
 func GetHolidays(c echo.Context) error {
-	config, _ := lib.GetConfig()
+	config, _ := services.GetConfig()
 	startDate, err := time.Parse("2006-01-02", config.App.StartDate)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Internal Server Error"})
@@ -68,7 +49,7 @@ func GetHolidays(c echo.Context) error {
 	if err := parseQuery(c.QueryParam("q"), &startDate, &endDate); err != nil {
 		return c.JSON(err.Code, map[string]string{"message": err.Message})
 	}
-	holiday_list, app_err := getNationalHolidays(&startDate, &endDate, config)
+	holiday_list, app_err := services.GetNationalHolidays(&startDate, &endDate, config)
 	if app_err != nil {
 		return c.JSON(app_err.Code, map[string]string{"message": app_err.Message})
 	}
