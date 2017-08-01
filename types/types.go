@@ -4,6 +4,10 @@ import (
 	"fmt"
 )
 
+type SjisCsvConfig struct {
+	Path string
+}
+
 type AppConfig struct {
 	Port      int
 	StartDate string
@@ -24,8 +28,9 @@ type RDBConfig struct {
 }
 
 type Config struct {
-	RDB RDBConfig
-	App AppConfig
+	RDB     RDBConfig
+	App     AppConfig
+	SjisCsv SjisCsvConfig `toml:"sjis_csv"`
 }
 
 type Request struct {

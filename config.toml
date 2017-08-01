@@ -12,4 +12,7 @@ debug = true
 port = 1323
 startDate = "2016-01-01"
 endDate = "2019-01-01"
-storage = "rdb"
+storage = "sjis_csv"
+
+[sjis_csv]
+path = "syukujitsu.csv"

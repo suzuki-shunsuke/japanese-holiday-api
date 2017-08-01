@@ -3,26 +3,28 @@ package lib
 import (
 	"encoding/csv"
 	"github.com/suzuki-shunsuke/japanese-holiday-api/models"
+	"github.com/suzuki-shunsuke/japanese-holiday-api/types"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 	"io"
-	"log"
+	"net/http"
 	"os"
 	"time"
 )
 
-func ReadHolidayCsv(path string) []models.Holiday {
+func ReadHolidayCsv(path string) ([]models.Holiday, *types.AppError) {
 	file, err := os.Open(path)
-	failOnError(err)
+	if err != nil {
+		return nil, &types.AppError{Code: http.StatusInternalServerError, Message: "Internal Server Error"}
+	}
 	defer file.Close()
 	reader := csv.NewReader(transform.NewReader(file, japanese.ShiftJIS.NewDecoder()))
 	reader.LazyQuotes = true // ダブルクオートを厳密にチェックしない
 	// remove header
 	_, err = reader.Read()
-	if err == io.EOF {
-		failOnError(err)
+	if err != nil {
+		return nil, &types.AppError{Code: http.StatusInternalServerError, Message: "Internal Server Error"}
 	}
-	failOnError(err)
 	var holidays []models.Holiday
 
 	for {
@@ -30,7 +32,9 @@ func ReadHolidayCsv(path string) []models.Holiday {
 		if err == io.EOF {
 			break
 		}
-		failOnError(err)
+		if err != nil {
+			return nil, &types.AppError{Code: http.StatusInternalServerError, Message: "Internal Server Error"}
+		}
 		date, _ := time.Parse("2006-01-02", record[0])
 		holidays = append(
 			holidays,
@@ -40,11 +44,5 @@ func ReadHolidayCsv(path string) []models.Holiday {
 				Type:      1,
 				DayOfWeek: int(date.Weekday())})
 	}
-	return holidays
-}
-
-func failOnError(err error) {
-	if err != nil {
-		log.Fatal("Error:", err)
-	}
+	return holidays, nil
 }

@@ -88,9 +88,21 @@ func getNationalHolidaysByRDB(req *types.Request, startDate *time.Time, endDate 
 	return holidays_, nil
 }
 
-func getNationalHolidays(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ models.Holidays, err *types.AppError) {
+func getNationalHolidays(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays models.Holidays, app_err *types.AppError) {
 	if config.App.Storage == "rdb" {
 		return getNationalHolidaysByRDB(req, startDate, endDate, config)
+	}
+	if config.App.Storage == "sjis_csv" {
+		holidays_, app_err := lib.ReadHolidayCsv(config.SjisCsv.Path)
+		if app_err != nil {
+			return holidays_, app_err
+		}
+		for _, holiday := range holidays_ {
+			if !holiday.Date.Before(*startDate) && holiday.Date.Before(*endDate) {
+				holidays = append(holidays, holiday)
+			}
+		}
+		return holidays, nil
 	}
 	return nil, &types.AppError{Code: http.StatusInternalServerError, Message: "Internal Server Error"}
 }
