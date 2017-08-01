@@ -69,28 +69,22 @@ func getHolidayList(holidays_ *models.Holidays, startDate *time.Time, endDate *t
 	return holiday_list
 }
 
-func getNationalHolidaysByRDB(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ models.Holidays, err *types.AppError) {
+func getNationalHolidaysByRDB(startDate *time.Time, endDate *time.Time, config *types.Config) (holidays_ models.Holidays, err *types.AppError) {
 	db, app_err := lib.GetConnection(config)
 	if app_err != nil {
 		return nil, app_err
 	}
-	query := db.Select("name, type, date, day_of_week")
+	query := db.Select("name, type, date, day_of_week").Where("date >= ? AND date < ?", startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
 	if config.RDB.Debug {
 		query = query.Debug()
-	}
-	if len(req.From) > 0 {
-		query = query.Where("date >= ?", startDate.Format("2006-01-02"))
-	}
-	if len(req.To) > 0 {
-		query = query.Where("date < ?", endDate.Format("2006-01-02"))
 	}
 	query.Find(&holidays_)
 	return holidays_, nil
 }
 
-func getNationalHolidays(req *types.Request, startDate *time.Time, endDate *time.Time, config *types.Config) (holidays models.Holidays, app_err *types.AppError) {
+func getNationalHolidays(startDate *time.Time, endDate *time.Time, config *types.Config) (holidays models.Holidays, app_err *types.AppError) {
 	if config.App.Storage == "rdb" {
-		return getNationalHolidaysByRDB(req, startDate, endDate, config)
+		return getNationalHolidaysByRDB(startDate, endDate, config)
 	}
 	if config.App.Storage == "sjis_csv" {
 		holidays_, app_err := lib.ReadHolidayCsv(config.SjisCsv.Path)
@@ -107,32 +101,31 @@ func getNationalHolidays(req *types.Request, startDate *time.Time, endDate *time
 	return nil, &types.AppError{Code: http.StatusInternalServerError, Message: "Internal Server Error"}
 }
 
-func parseQuery(q string, startDate *time.Time, endDate *time.Time) (*types.Request, *types.AppError) {
+func parseQuery(q string, startDate *time.Time, endDate *time.Time) *types.AppError {
 	var err error
 	req := new(types.Request)
 	if len(q) > 0 {
 		if json.Unmarshal(([]byte)(q), req) != nil {
-			return nil, &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'q' parameter is invalid"}
+			return &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'q' parameter is invalid"}
 		}
 		// Convert From string to time.Time
 		if len(req.From) > 0 {
 			*startDate, err = time.Parse("2006-01-02", req.From)
 			if err != nil {
-				return nil, &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'from' parameter is invalid"}
+				return &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'from' parameter is invalid"}
 			}
 		}
 		if len(req.To) > 0 {
 			*endDate, err = time.Parse("2006-01-02", req.To)
 			if err != nil {
-				return nil, &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'to' parameter is invalid"}
+				return &types.AppError{Code: http.StatusBadRequest, Message: "The format of 'to' parameter is invalid"}
 			}
 		}
 	}
-	return req, nil
+	return nil
 }
 
 func GetHolidays(c echo.Context) error {
-	q := c.QueryParam("q")
 	config, _ := lib.GetConfig()
 	startDate, err := time.Parse("2006-01-02", config.App.StartDate)
 	if err != nil {
@@ -142,11 +135,10 @@ func GetHolidays(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Internal Server Error"})
 	}
-	req, app_err := parseQuery(q, &startDate, &endDate)
-	if app_err != nil {
-		return c.JSON(app_err.Code, map[string]string{"message": app_err.Message})
+	if err := parseQuery(c.QueryParam("q"), &startDate, &endDate); err != nil {
+		return c.JSON(err.Code, map[string]string{"message": err.Message})
 	}
-	holiday_list, app_err := getNationalHolidays(req, &startDate, &endDate, config)
+	holiday_list, app_err := getNationalHolidays(&startDate, &endDate, config)
 	if app_err != nil {
 		return c.JSON(app_err.Code, map[string]string{"message": app_err.Message})
 	}
