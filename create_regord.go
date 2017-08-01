@@ -7,7 +7,7 @@ import (
 
 func main() {
 	config, _ := lib.GetConfig()
-	db := lib.GetConnection(config)
+	db := models.GetConnection(config)
 	db.AutoMigrate(&models.Holiday{})
 	holidays := lib.ReadHolidayCsv("data/syukujitsu.csv")
 	for _, holiday := range holidays {
