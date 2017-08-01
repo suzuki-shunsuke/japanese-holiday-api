@@ -51,7 +51,7 @@ func getHolidayList(holidays_ *models.Holidays, startDate *time.Time, endDate *t
 		}
 		// http://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html
 		// 2.「国民の祝日」が日曜日に当たるときは、その日後においてその日に最も近い「国民の祝日」でない日を休日とする。
-		for alter_date := date.AddDate(0, 0, 1); alter_date.Before(date.AddDate(0, 0, 7)); alter_date = alter_date.AddDate(0, 0, 1) {
+		for alter_date := date.AddDate(0, 0, 1); alter_date.Before(date.AddDate(0, 0, 7)) && alter_date.Before(*endDate); alter_date = alter_date.AddDate(0, 0, 1) {
 			date_str := alter_date.Format("2006-01-02")
 			_, ok := holidays[date_str]
 			if !ok {
