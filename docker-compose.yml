@@ -1,0 +1,16 @@
+version: '3'
+services:
+  app:
+    image: suzukishunsuke/japanese-holiday-api
+    ports:
+    - "1323:1323"
+    env_file:
+    - env_file/app
+  rdb:
+    image: mariadb:10.3.0
+    env_file:
+    - env_file/rdb
+    ports:
+    - "4306:3306"
+    volumes:
+    - ./mysql_conf.d:/etc/mysql/conf.d

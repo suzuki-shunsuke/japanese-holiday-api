@@ -1,0 +1,18 @@
+[rdb]
+dbms = "mysql"
+user = "root"
+password = "password"
+host = "localhost"
+port = 4306
+dbname = "app"
+isOtherHolidaysStored = false
+debug = true
+
+[app]
+port = 1323
+startDate = "2016-01-01"
+endDate = "2019-01-01"
+storage = "sjis_csv"
+
+[sjis_csv]
+path = "data/syukujitsu.csv"
