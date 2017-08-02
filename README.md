@@ -15,7 +15,7 @@ $ make
 
 ## API Reference
 
-### Request
+### Request & Response
 
 ```yaml
 - method: GET
@@ -56,7 +56,7 @@ $ make
         description: エラーメッセージ
 ```
 
-### Response
+### Date Type
 
 number | description
 --- | ---
