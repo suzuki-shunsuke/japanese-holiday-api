@@ -19,7 +19,7 @@ func ReadHolidayCsv(path string) ([]models.Holiday, *types.AppError) {
 	}
 	defer file.Close()
 	reader := csv.NewReader(transform.NewReader(file, japanese.ShiftJIS.NewDecoder()))
-	reader.LazyQuotes = true // ダブルクオートを厳密にチェックしない
+	reader.LazyQuotes = true // Don't check double quote strictly
 	// remove header
 	_, err = reader.Read()
 	if err != nil {
